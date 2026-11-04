@@ -1,7 +1,27 @@
-= CI/CD Suite
+= Proven CI/CD
 
 *An atlas of composable repository assurance: security, governance, build hygiene,
 contracts, language verification and ecosystem integration.*
+
+== Canonical repository and migration status
+
+`hyperpolymath/proven-cicd` is the canonical destination for this suite.
+The GitHub import retained the existing Git history and both advertised branch
+heads, including the open Creusot execution-evidence work. The import checkpoint
+is recorded in link:docs/assurance/2026-11-04/CANONICAL-IMPORT.adoc[the canonical
+history and rollout record]. The legacy `hyperpolymath/cicd-suite` repository
+remains available for existing full-SHA callers and its review/run evidence.
+
+Migration is staged: repository protections, two real caller canaries and the
+remaining caller inventory must qualify before an estate-wide cutover. Existing
+full-SHA pins keep their source identity; this repository's scanner caller is a
+coordinate-only canary at the already published `a12b2b4` source. No release or
+gate is certified merely by the new repository name.
+
+The Idris2 verdict kernel is present. Its operational GitHub adapter remains
+unpromoted: review reproduced an invalid duplicate-field response becoming a
+false passed verdict, and the repair must complete its expanded controls before
+publication. See the checkpoint for the exact remaining boundary.
 
 == Discover the suite
 
@@ -454,7 +474,10 @@ No logs, artifacts, secrets, policy edits, reruns or merges are requested.
 
 See link:docs/CI-TRIAGE-2026-10-30.adoc[the sampled estate diagnosis] and
 link:docs/SECRET-SCAN-PERFORMANCE.adoc[the secret-scan latency investigation
-and implementation handoff]. No replacement scanner has been deployed.
+and implementation handoff]. The bounded scanner is deployed to the suite and
+Echidna canaries; the paired full-history receipts are recorded in
+link:docs/SCANNER-STARTUP-AND-PARITY.adoc[the scanner qualification record].
+An estate-wide replacement has not completed.
 
 === Bounded secret scanner (canary, not estate-deployed)
 
@@ -512,6 +535,6 @@ interpret an exit-zero partial scan as assurance. panic-attack assail findings
 remain report-only; strict coverage is not a security verdict.
 
 See link:docs/assurance/AUDIT-2026-11-04.adoc[the adversarial audit checkpoint]
-for executed controls, coverage gaps, proof boundaries and the pending
-`proven-cicd` rename. Reproduce bounded scanner controls with
+for executed controls, coverage gaps and proof boundaries. The canonical
+repository now exists; protection and consumer migration are still in progress. Reproduce bounded scanner controls with
 `bash tests/scanner-adversarial.sh /path/to/pons /path/to/panic-attack`.
