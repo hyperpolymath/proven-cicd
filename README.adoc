@@ -475,8 +475,11 @@ No logs, artifacts, secrets, policy edits, reruns or merges are requested.
 See link:docs/CI-TRIAGE-2026-10-30.adoc[the sampled estate diagnosis] and
 link:docs/SECRET-SCAN-PERFORMANCE.adoc[the secret-scan latency investigation
 and implementation handoff]. The bounded scanner is deployed to the suite and
-Echidna canaries; the paired full-history receipts are recorded in
-link:docs/SCANNER-STARTUP-AND-PARITY.adoc[the scanner qualification record].
+Echidna canaries. The earlier paired full-history receipts are retained in
+https://github.com/hyperpolymath/cicd-suite/pull/84[suite PR 84]. The canonical-name
+canaries subsequently passed in
+https://github.com/hyperpolymath/proven-cicd/actions/runs/41910602874[Proven CI/CD]
+and https://github.com/hyperpolymath/echidna/actions/runs/41909747996[Echidna].
 An estate-wide replacement has not completed.
 
 === Bounded secret scanner (canary, not estate-deployed)
@@ -508,21 +511,19 @@ production rollout; see link:docs/SECRET-SCANNER-ROLLOUT.adoc[rollout status].
 
 ==== Post-merge startup repair and supplemental detector ports
 
-The follow-up described in
+The dated checkpoint in
 link:docs/SCANNER-STARTUP-AND-PARITY.adoc[Startup and supplemental coverage]
-repins this repository to the published #62 merge commit. The initial
-pre-merge pin failed resolution after merge; the canonical legacy dependency
-was then explicitly refused by the caller's Actions admission policy.
-Rather than broadening permissions, the suite now carries Rust/shell ports
-and 26 differential fixtures against frozen legacy run bodies, plus five
-hardening controls. The former legacy comparison workflow runs these local
-checks; it no longer invokes standards or repeats full-history Gitleaks.
+records the earlier pre-merge pin and admission failures. Its deployment status
+is historical. The integrated source was subsequently published and qualified
+with the suite and Echidna callers; the current full source pin is
+`a12b2b4644db1a1250bc50b58fd24c99f89f564e`.
 
-The new scanner source includes both ports in its composite verdict. Publish
-that implementation before advancing consumer pins: the currently deployed
-suite pin still selects the previously published scanner, while separate
-local supplement jobs preserve this repository's supplementary checking.
-No estate-wide rollout or whole-corpus equivalence is claimed by the fixtures.
+The reusable scanner now provides all three original contexts: Gitleaks, Rust
+secrets and shell secrets. Both canonical-name caller runs linked above executed
+that exact published source. The separate local supplemental workflow remains
+a regression control; it does not supply a missing port in the deployed source.
+The 26 differential fixtures and five hardening controls retain their finite
+coverage boundary. No estate-wide rollout or whole-corpus equivalence is claimed.
 
 == Strict scanner coverage and audit checkpoint
 
