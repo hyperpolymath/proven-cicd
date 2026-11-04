@@ -165,6 +165,25 @@ same pinned compiler, retains the three contradictory-proof controls, then
 runs the new executable/collector controls. There is no locally claimed
 compiler, syntax, fixture or runtime success for this candidate.
 
+The first hosted attempt at d625f3f9ecf13cf527d6e0214766df999476fb99,
+https://github.com/hyperpolymath/proven-cicd/actions/runs/41931852680/job/126930445366[job 126930445366],
+bootstrapped the pinned Idris2 compiler, compiled the unchanged kernel and
+rejected all three named contradictory theorems. The bridge then failed to
+compile: GitHubMain could not resolve Language.JSON.Data.JSON. Its direct
+Language.JSON import is added by this follow-up; the executable/collector
+controls and both live consumer receipts still require a fresh successful
+hosted run. The unrelated manual run on default main checked the old kernel
+only and provides no qualification for this bridge.
+
+The independent Code Hygiene closure check also exposed the canonical import's
+retained legacy composite pins. Its source identity now recognizes exactly
+hyperpolymath/cicd-suite and hyperpolymath/proven-cicd when the checkout is one
+of those repositories. Both populations still inspect their pinned commits and
+current action trees, and absence of any examined self pin still fails.
+Twenty authored fixture controls cover both names, unrelated identities,
+missing history, stale trees and retained lock coverage. These controls await
+hosted execution; consumer pins and native lock bytes are unchanged.
+
 A manual workflow_dispatch on the published candidate branch additionally
 runs tests/assurance-real-canaries.sh. The existing workflow already exists
 on default main, so this uses its established dispatch surface without new

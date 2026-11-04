@@ -3,6 +3,7 @@ module Assurance.GitHubMain
 
 import Assurance.GitHub
 import Assurance.Verdict
+import Language.JSON
 import System
 import System.File
 
