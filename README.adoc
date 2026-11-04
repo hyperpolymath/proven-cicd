@@ -476,11 +476,9 @@ See link:docs/CI-TRIAGE-2026-10-30.adoc[the sampled estate diagnosis] and
 link:docs/SECRET-SCAN-PERFORMANCE.adoc[the secret-scan latency investigation
 and implementation handoff]. The bounded scanner is deployed to the suite and
 Echidna canaries. The earlier paired full-history receipts are retained in
-https://github.com/hyperpolymath/cicd-suite/pull/84[suite PR 84]. The canonical-name
-canaries subsequently passed in
-https://github.com/hyperpolymath/proven-cicd/actions/runs/41910602874[Proven CI/CD]
-and https://github.com/hyperpolymath/echidna/actions/runs/41909747996[Echidna].
-An estate-wide replacement has not completed.
+https://github.com/hyperpolymath/cicd-suite/pull/84[suite PR 84]. Canonical scanner
+qualification remains pending: hosted receipts for both canonical canaries at
+their exact heads are still required. An estate-wide replacement has not completed.
 
 === Bounded secret scanner (canary, not estate-deployed)
 
