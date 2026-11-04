@@ -13,7 +13,9 @@ Assurance.Verdict and assurance-kernel.ipkg remain unchanged. The new
 assurance-github.ipkg builds an executable that imports the actual total
 kernel. Successful host acquisition is translated to typed observations and
 decided by Assurance.Verdict.decide. The CLI builds this executable in a fresh
-directory from source checked against its current Git commit. It accepts no
+directory from immutable Git blob bytes after comparing the worktree source
+against that commit. Compiler inputs and the jq module are staged from the
+verified blob bytes, not reread later from the worktree. It accepts no
 outside verdict executable or pre-admitted receipt.
 
 The existing compiler lane still builds the kernel and requires all three
@@ -87,8 +89,12 @@ present exactly once in the declared order. Timestamps must be well formed,
 ordered within the job/run and not in the future. A source symlink/gitlink,
 truncated tree, missing job, missing detector step, ambiguous name or changed
 run/attempt cannot pass. The run and inventory are fetched again after job
-collection. Decision time is captured after the final GET, with a five-minute
-collection bound, policy expiry and a maximum result age of one day.
+collection. Relevant identity/status/time fields in each selected inventory
+entry must equal the corresponding standalone run snapshot, even if its ID
+and attempt stayed the same. Decision time is captured after the final GET;
+expiry and freshness are checked again after actual kernel execution. The
+result is retained only if the observation list is unchanged. The collection
+bound is five minutes and the maximum result age is one day.
 
 These are bounded observations, not an atomic snapshot of GitHub. A change
 after the last read or between unobserved instants is not a recorded history.
@@ -140,7 +146,7 @@ contain public subject identifiers and step metadata, not job logs or secrets.
 
 tests/assurance-github.sh builds the actual executable once and uses the same
 collector with a transport fixture. Its authored matrix has 15 native wire/raw
-JSON controls, 56 collector cases, and one separate compiler-absence control.
+JSON controls, 59 collector cases, and one separate compiler-absence control.
 Those counts describe source, not a passing run. Positive controls bracket
 negative controls. Expected refusal reasons are checked, so an unrelated jq
 syntax failure cannot satisfy a malformed-input or source-binding control.
@@ -150,7 +156,8 @@ multiple documents, escaped aliases, incorrect policy digest, unsupported
 events, wrong repository/head/source, symlink/gitlink parents, incomplete
 inventories, superseding runs, reruns/deletion, missing/ambiguous jobs,
 missing/reordered/skipped steps, provisioning/check failure, queued work,
-stale/future evidence and expiry during collection.
+stale/future evidence, same-attempt inventory changes and expiry both during
+collection and after executable work.
 
 Pull requests touching these files run the existing Assurance kernel
 (Idris2 canary) workflow. It first validates shell/jq syntax, bootstraps the

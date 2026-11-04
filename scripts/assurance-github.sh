@@ -32,15 +32,21 @@ assurance_build() {
         expected="$directory/expected-source"
         git -C "$ASSURANCE_ROOT" show "$ASSURANCE_SOURCE_SHA:$path" >"$expected" || return 2
         cmp -s "$source" "$expected" || return 2
-        hash=$(sha256sum "$source") || return 2
+        hash=$(sha256sum "$expected") || return 2
         printf '%s  %s\n' "${hash%% *}" "$path" >>"$directory/source-manifest.txt" || return 2
+        # Stage the immutable bytes just compared, never a later worktree read.
+        case "$path" in
+            assurance-github.ipkg|src/Assurance/Verdict.idr|\
+            src/Assurance/GitHub.idr|src/Assurance/GitHubMain.idr)
+                cp "$expected" "$directory/$path" || return 2 ;;
+            scripts/assurance-github.jq)
+                cp "$expected" "$directory/assurance-github.jq" || return 2 ;;
+            scripts/assurance-github.sh) : ;;
+            *) return 2 ;;
+        esac
     done
     hash=$(sha256sum "$directory/source-manifest.txt") || return 2
     ASSURANCE_SOURCE_BUNDLE_SHA=${hash%% *}
-    cp "$ASSURANCE_ROOT/assurance-github.ipkg" "$directory/" || return 2
-    cp "$ASSURANCE_ROOT/src/Assurance/"{Verdict,GitHub,GitHubMain}.idr \
-       "$directory/src/Assurance/" || return 2
-    cp "$ASSURANCE_ROOT/scripts/assurance-github.jq" "$directory/" || return 2
     ASSURANCE_COMPILER_VERSION=$(idris2 --version) || return 2
     if ! (cd "$directory" && timeout 180 idris2 --build assurance-github.ipkg) \
         >"$directory/compiler.log" 2>&1; then
@@ -174,26 +180,31 @@ assurance_collect() (
        '{started_at:$started,repository_before:$before[0],repository_after:$after[0],
          commit:$commit[0],tree:$tree[0],runs_before:$runs_before[0],
          runs_after:$runs_after[0],runs:$snapshots}' >"$work/bundle.json" || unknown temporary_storage_unavailable
-    jq -n -L "$ASSURANCE_JQ_DIR" --slurpfile policy "$work/policy.json" \
-       --slurpfile bundle "$work/bundle.json" --argjson now "$now" \
-       'include "assurance-github"; qualify($policy[0];$bundle[0];$now)' \
-       >"$work/observations.json" 2>"$work/qualification.error" || {
-        local diagnostic reason pattern='^jq: error \(at <unknown>\): ([a-z_]+)$'
-        diagnostic=$(<"$work/qualification.error")
-        if [[ $diagnostic =~ $pattern ]]; then
-            reason=${BASH_REMATCH[1]}
-            case "$reason" in
-                invalid_policy|collection_expired|policy_expired|repository_binding|subject_binding|\
-                incomplete_tree|incomplete_run_inventory|missing_run_snapshot|run_binding|run_changed|\
-                invalid_run_time|superseded_initial_run|superseded_final_run|workflow_source_binding|\
-                invalid_jobs|unexpected_job|stale_run|missing_job|invalid_execution_times|\
-                unexplained_run_failure|step_contract_mismatch)
-                    unknown "$reason" ;;
-                *) unknown qualification_tool_error ;;
-            esac
-        fi
-        unknown qualification_tool_error
+    qualify_at() {
+        local decision=$1 destination=$2
+        jq -n -L "$ASSURANCE_JQ_DIR" --slurpfile policy "$work/policy.json" \
+           --slurpfile bundle "$work/bundle.json" --argjson now "$decision" \
+           'include "assurance-github"; qualify($policy[0];$bundle[0];$now)' \
+           >"$destination" 2>"$work/qualification.error" || {
+            local diagnostic reason pattern='^jq: error \(at <unknown>\): ([a-z_]+)$'
+            diagnostic=$(<"$work/qualification.error")
+            if [[ $diagnostic =~ $pattern ]]; then
+                reason=${BASH_REMATCH[1]}
+                case "$reason" in
+                    invalid_policy|collection_expired|policy_expired|repository_binding|subject_binding|\
+                    incomplete_tree|incomplete_run_inventory|missing_run_snapshot|run_binding|run_changed|\
+                    invalid_run_time|superseded_initial_run|superseded_final_run|workflow_source_binding|\
+                    initial_inventory_changed|final_inventory_changed|\
+                    invalid_jobs|unexpected_job|stale_run|missing_job|invalid_execution_times|\
+                    unexplained_run_failure|step_contract_mismatch)
+                        unknown "$reason" ;;
+                    *) unknown qualification_tool_error ;;
+                esac
+            fi
+            unknown qualification_tool_error
+        }
     }
+    qualify_at "$now" "$work/observations.json"
     jq -e --slurpfile policy "$work/policy.json" '
        type == "array" and length == ($policy[0].runs|map(.jobs|length)|add)
        and all(.[]; .state=="PASSED" or .state=="FAILED" or .state=="PENDING" or .state=="UNKNOWN")' \
@@ -213,6 +224,12 @@ assurance_collect() (
             ;;
         *) unknown kernel_unavailable ;;
     esac
+    # The pure kernel has decided this exact observation list. Recheck expiry
+    # after executable work and retain that result only if the list is unchanged.
+    now=$(date -u +%s) || unknown invalid_clock
+    [[ $now =~ ^[0-9]+$ ]] || unknown invalid_clock
+    qualify_at "$now" "$work/final-observations.json"
+    cmp -s "$work/observations.json" "$work/final-observations.json" || unknown evidence_changed
     response_hash=$(sha256sum "$work/responses.sha256") || unknown response_digest_error
     jq -n --arg verdict "$verdict" --arg kernel "$kernel_verdict" \
        --arg policy_digest "$expected_digest" --arg source "$ASSURANCE_SOURCE_SHA" \

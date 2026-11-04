@@ -53,6 +53,16 @@ cat >"$work/bin/date" <<'DATE'
 #!/usr/bin/env bash
 set -euo pipefail
 if [[ $# == 2 && $1 == -u && $2 == +%s && -n ${ASSURANCE_FIXTURE_DIR:-} ]]; then
+    count=0
+    if [[ -f "$ASSURANCE_FIXTURE_DIR/clock-calls" ]]; then
+        read -r count <"$ASSURANCE_FIXTURE_DIR/clock-calls"
+    fi
+    count=$((count+1))
+    printf '%s\n' "$count" >"$ASSURANCE_FIXTURE_DIR/clock-calls"
+    # One start, nine request guards, then pre/post-kernel decision clocks.
+    if [[ $count -ge 12 && -f "$ASSURANCE_FIXTURE_DIR/after-kernel-clock" ]]; then
+        cp "$ASSURANCE_FIXTURE_DIR/after-kernel-clock" "$ASSURANCE_FIXTURE_DIR/clock"
+    fi
     cat "$ASSURANCE_FIXTURE_DIR/clock"
 else
     exec "$ASSURANCE_REAL_DATE" "$@"
@@ -280,6 +290,12 @@ baseline
 change runs-after '.workflow_runs += [.workflow_runs[0] | .id=1002 | .run_number=2] | .total_count=2'
 check_case superseded-during-collection UNKNOWN 2 superseded_final_run
 baseline
+change runs-before '.workflow_runs[0].status="in_progress" | .workflow_runs[0].conclusion=null'
+check_case initial-inventory-same-attempt-change UNKNOWN 2 initial_inventory_changed
+baseline
+change runs-after '.workflow_runs[0].status="in_progress" | .workflow_runs[0].conclusion=null'
+check_case final-inventory-same-attempt-change UNKNOWN 2 final_inventory_changed
+baseline
 change run-after '.run_attempt=2'
 check_case rerun-attempt UNKNOWN 2 run_binding
 baseline
@@ -327,6 +343,10 @@ baseline
 change policy '.expires_at=((.issued_at|fromdateiso8601)+125|todateiso8601)'
 printf '%s\n' "$((now+6))" >"$fixture/finish-clock"
 check_case expired-during-collection UNKNOWN 2 policy_expired
+baseline
+change policy '.expires_at=((.issued_at|fromdateiso8601)+125|todateiso8601)'
+printf '%s\n' "$((now+6))" >"$fixture/after-kernel-clock"
+check_case expired-after-kernel UNKNOWN 2 policy_expired
 baseline
 printf '%s\n' "$((now+301))" >"$fixture/finish-clock"
 check_case collection-bound UNKNOWN 2 collection_expired

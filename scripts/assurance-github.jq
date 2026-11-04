@@ -187,10 +187,12 @@ def qualify($p; $b; $now):
                 and ($run.run_started_at == null
                      or (($run.run_started_at | epoch) >= ($run.created_at | epoch)
                          and ($run.run_started_at | epoch) <= ($run.updated_at | epoch))); "invalid_run_time")
-      | require(($b.runs_before | latest_run($p; $policy_run)) as $latest
-                | $latest.id == $policy_run.id and $latest.run_attempt == $policy_run.attempt; "superseded_initial_run")
-      | require(($b.runs_after | latest_run($p; $policy_run)) as $latest
-                | $latest.id == $policy_run.id and $latest.run_attempt == $policy_run.attempt; "superseded_final_run")
+      | ($b.runs_before | latest_run($p; $policy_run)) as $listed_before
+      | ($b.runs_after | latest_run($p; $policy_run)) as $listed_after
+      | require($listed_before.id == $policy_run.id and $listed_before.run_attempt == $policy_run.attempt; "superseded_initial_run")
+      | require($listed_after.id == $policy_run.id and $listed_after.run_attempt == $policy_run.attempt; "superseded_final_run")
+      | require(($listed_before | run_projection) == ($snapshot.initial | run_projection); "initial_inventory_changed")
+      | require(($listed_after | run_projection) == ($run | run_projection); "final_inventory_changed")
       | require(($b.tree | workflow_blob_matches($policy_run)); "workflow_source_binding")
       | require(($snapshot.jobs | jobs_page($p; $policy_run)); "invalid_jobs")
       | require(all($snapshot.jobs.jobs[]; .name as $name | any($policy_run.jobs[]; .name == $name)); "unexpected_job")
