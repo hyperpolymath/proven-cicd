@@ -52,7 +52,9 @@ jobs:
       - name: Validate bridge shell and qualifier syntax
         run: |
           set -euo pipefail
-          bash -n scripts/assurance-github.sh tests/assurance-github.sh tests/assurance-real-canaries.sh
+          for script in scripts/assurance-github.sh tests/assurance-github.sh tests/assurance-real-canaries.sh; do
+            bash -n "$script"
+          done
           jq -n -L scripts 'include "assurance-github"; true' >/dev/null
       - name: Bootstrap pinned Idris2 0.7.0 source
         env:
