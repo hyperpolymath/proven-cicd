@@ -35,3 +35,20 @@ Split only if a workflow family needs different maintainers, access controls,
 release cadence or execution infrastructure. The distinction between scheduled
 and event-triggered jobs alone is insufficient. Keep shared verdict logic and
 controls in one owner even if deployment-specific adapters later split.
+
+== Workflow acceptance contract
+
+Every new workflow names its inputs, side effects, permissions, applicable
+subjects, failure/refusal semantics, positive and negative controls, and
+execution receipt. A successful setup job does not establish that the intended
+subject was checked.
+
+== Scoped Rust documentation
+
+`rust-ci.yml` and `rust-ci-check` accept `doc_packages`, defaulting to
+`--workspace` so existing consumers retain their coverage. A consumer with
+optional GUI or database packages may select explicit `-p package` arguments
+for its portable CLI boundary. Document the matching build, test and
+documentation scope: excluded packages are not qualified by that job.
+Doctests remain enabled, and a selected package's failing documentation fails
+the gate.
