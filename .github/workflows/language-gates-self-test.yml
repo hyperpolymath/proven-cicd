@@ -28,6 +28,7 @@ on:
       - "scripts/deonboard-workflow.sh"
       - "tests/gate-action-owners.sh"
       - "tests/inspect-pr-ci.sh"
+      - "tests/rust-doc-package-scope.sh"
       - "tests/suite-source-compatibility.sh"
       - "scripts/inspect-pr-ci.sh"
       - ".github/workflows/rust-ci.yml"
@@ -46,6 +47,7 @@ on:
       - "scripts/deonboard-workflow.sh"
       - "tests/gate-action-owners.sh"
       - "tests/inspect-pr-ci.sh"
+      - "tests/rust-doc-package-scope.sh"
       - "tests/suite-source-compatibility.sh"
       - "scripts/inspect-pr-ci.sh"
       - ".github/workflows/rust-ci.yml"
@@ -105,6 +107,8 @@ jobs:
         run: bash tests/suite-source-compatibility.sh
       - name: Rust gate
         run: bash actions/rust-ci-check/test.sh
+      - name: Scoped Rust documentation still rejects broken doctests
+        run: bash tests/rust-doc-package-scope.sh
       - name: Creusot gate
         run: bash actions/creusot-check/test.sh
       - name: SPARK gate
